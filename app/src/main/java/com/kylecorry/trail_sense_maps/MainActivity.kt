@@ -9,11 +9,14 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.kylecorry.trail_sense_maps.maps.infrastructure.GeoUriParser
 import com.kylecorry.trail_sense_maps.maps.ui.MapsFragment
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationView
+
+    private var geoIntentLocation: GeoUriParser.NamedCoordinate? = null
 
     private val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
@@ -43,12 +46,25 @@ class MainActivity : AppCompatActivity() {
             syncFragmentWithSelection(item.itemId)
             true
         }
+
+        val intentData = intent.data
+        if (intent.scheme == "geo" && intentData != null) {
+            val namedCoordinate = GeoUriParser().parse(intentData)
+            geoIntentLocation = namedCoordinate
+            bottomNavigation.selectedItemId = R.id.action_maps
+        }
     }
 
     private fun syncFragmentWithSelection(selection: Int){
         when (selection) {
             R.id.action_maps -> {
-               switchFragment(MapsFragment())
+                val namedCoord = geoIntentLocation
+                if (namedCoord != null) {
+                    geoIntentLocation = null
+                    switchFragment(MapsFragment(namedCoord))
+                } else {
+                    switchFragment(MapsFragment())
+                }
             }
         }
     }

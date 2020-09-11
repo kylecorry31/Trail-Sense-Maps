@@ -11,15 +11,28 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "0.1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
+    lintOptions {
+        abortOnError false
     }
 }
 
@@ -35,4 +48,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'com.google.android.material:material:1.2.1'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
+    implementation 'org.osmdroid:osmdroid-android:6.1.6'
 }
