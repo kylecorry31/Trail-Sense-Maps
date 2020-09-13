@@ -8,13 +8,14 @@ import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kylecorry.trail_sense_maps.R
-import com.kylecorry.trail_sense_maps.maps.domain.Coordinate
-import com.kylecorry.trail_sense_maps.maps.infrastructure.GeoUriParser
-import com.kylecorry.trail_sense_maps.sensors.DeclinationCalculator
-import com.kylecorry.trail_sense_maps.sensors.GPS
-import com.kylecorry.trail_sense_maps.sensors.SensorChecker
-import com.kylecorry.trail_sense_maps.sensors.VectorCompass
-import com.kylecorry.trail_sense_maps.system.UiUtils
+import com.kylecorry.trailsensecore.domain.Coordinate
+import com.kylecorry.trailsensecore.infrastructure.sensors.SensorChecker
+import com.kylecorry.trailsensecore.infrastructure.sensors.compass.VectorCompass
+import com.kylecorry.trailsensecore.infrastructure.sensors.declination.DeclinationProvider
+import com.kylecorry.trailsensecore.infrastructure.sensors.gps.GPS
+import com.kylecorry.trailsensecore.infrastructure.system.GeoUriParser
+import com.kylecorry.trailsensecore.infrastructure.system.UiUtils
+import com.kylecorry.trailsensecore.infrastructure.time.Throttle
 
 class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate? = null) :
     Fragment() {
@@ -28,9 +29,11 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
     private var destination: Coordinate? = initialDestination?.coordinate
 
     private val gps by lazy { GPS(requireContext()) }
-    private val compass by lazy { VectorCompass(requireContext()) }
+    private val compass by lazy { VectorCompass(requireContext(), 32, true) }
     private val sensorChecker by lazy { SensorChecker(requireContext()) }
-    private val declinationCalculator = DeclinationCalculator()
+    private val declinationProvider by lazy { DeclinationProvider(gps, GPS(requireContext())) }
+
+    private val throttle = Throttle(20)
 
     private var wasCentered = false
     private var rotateMap = false
@@ -52,7 +55,7 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         mapView = CustomMapView(view.findViewById(R.id.map), compassView, gps.location)
         locationLockBtn = view.findViewById(R.id.location_lock_btn)
 
-        UiUtils.setButtonState(locationLockBtn, keepCentered)
+        UiUtils.setButtonState(locationLockBtn, keepCentered, UiUtils.color(requireContext(), R.color.colorPrimary), UiUtils.color(requireContext(), R.color.colorSecondary))
 
         compassView.setOnClickListener {
             rotateMap = !rotateMap
@@ -63,7 +66,7 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
             if (keepCentered){
                 mapView.showLocation(gps.location)
             }
-            UiUtils.setButtonState(locationLockBtn, keepCentered)
+            UiUtils.setButtonState(locationLockBtn, keepCentered, UiUtils.color(requireContext(), R.color.colorPrimary), UiUtils.color(requireContext(), R.color.colorSecondary))
         }
 
         mapView.showLocation(gps.location)
@@ -78,6 +81,7 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         CustomMapView.configure(context)
         mapView.onResume()
         gps.start(this::onLocationUpdate)
+        declinationProvider.start(this::onDeclinationUpdate)
         compass.start(this::onCompassUpdate)
 
         val d = destination
@@ -90,10 +94,16 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         super.onPause()
         mapView.onPause()
         gps.stop(this::onLocationUpdate)
+        declinationProvider.stop(this::onDeclinationUpdate)
         compass.stop(this::onCompassUpdate)
     }
 
     private fun update() {
+
+        if (throttle.isThrottled()){
+            return
+        }
+
         mapView.setMyLocation(gps.location)
         mapView.setCompassAzimuth(compass.bearing.value)
 
@@ -118,13 +128,17 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
 
     }
 
+    private fun onDeclinationUpdate(): Boolean {
+        compass.declination = declinationProvider.declination
+        update()
+        return false
+    }
+
     private fun onLocationUpdate(): Boolean {
         if (!wasCentered) {
             mapView.showLocation(gps.location)
             wasCentered = true
         }
-
-        compass.declination = declinationCalculator.calculate(gps.location, gps.altitude)
 
         update()
         return true
