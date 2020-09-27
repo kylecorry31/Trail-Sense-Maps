@@ -8,7 +8,7 @@ import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kylecorry.trail_sense_maps.R
-import com.kylecorry.trailsensecore.domain.Coordinate
+import com.kylecorry.trailsensecore.domain.geo.Coordinate
 import com.kylecorry.trailsensecore.infrastructure.sensors.SensorChecker
 import com.kylecorry.trailsensecore.infrastructure.sensors.compass.VectorCompass
 import com.kylecorry.trailsensecore.infrastructure.sensors.declination.DeclinationProvider
@@ -138,6 +138,11 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         if (!wasCentered) {
             mapView.showLocation(gps.location)
             wasCentered = true
+        }
+
+        val d = destination
+        if (d != null) {
+            mapView.showBeacon(d)
         }
 
         update()

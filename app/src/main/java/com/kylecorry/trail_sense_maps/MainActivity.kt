@@ -1,16 +1,16 @@
 package com.kylecorry.trail_sense_maps
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kylecorry.trail_sense_maps.maps.ui.MapsFragment
 import com.kylecorry.trailsensecore.infrastructure.system.GeoUriParser
+import com.kylecorry.trailsensecore.infrastructure.system.PermissionUtils
 import com.kylecorry.trailsensecore.infrastructure.system.doTransaction
 
 class MainActivity : AppCompatActivity() {
@@ -21,12 +21,6 @@ class MainActivity : AppCompatActivity() {
 
     private val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
-    init {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         super.onCreate(savedInstanceState)
@@ -34,11 +28,7 @@ class MainActivity : AppCompatActivity() {
 
         bottomNavigation = findViewById(R.id.bottom_navigation)
 
-        if (!hasPermissions()){
-            getPermission()
-        } else {
-            startApp()
-        }
+        PermissionUtils.requestPermissions(this, permissions, 1)
     }
 
     private fun startApp(){
@@ -70,21 +60,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasPermissions(): Boolean {
-        for (permission in permissions){
-            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED){
-                return false
-            }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (PermissionUtils.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            startApp()
+        } else {
+            Toast.makeText(this, "Location permission is required", Toast.LENGTH_LONG).show()
         }
-
-        return true
-    }
-
-    private fun getPermission(){
-        ActivityCompat.requestPermissions(this,
-            permissions.toTypedArray(),
-            1
-        )
     }
 
     private fun switchFragment(fragment: Fragment){

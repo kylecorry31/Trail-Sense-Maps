@@ -4,7 +4,7 @@ import android.content.Context
 import android.widget.ImageView
 import androidx.preference.PreferenceManager
 import com.kylecorry.trail_sense_maps.R
-import com.kylecorry.trailsensecore.domain.Coordinate
+import com.kylecorry.trailsensecore.domain.geo.Coordinate
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
