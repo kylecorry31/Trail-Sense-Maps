@@ -1,5 +1,6 @@
 package com.kylecorry.trail_sense_maps.maps.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,14 +9,19 @@ import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kylecorry.trail_sense_maps.R
+import com.kylecorry.trail_sense_maps.maps.infrastructure.ShareService
+import com.kylecorry.trail_sense_maps.maps.infrastructure.TrailSense
 import com.kylecorry.trailsensecore.domain.geo.Coordinate
 import com.kylecorry.trailsensecore.infrastructure.sensors.SensorChecker
 import com.kylecorry.trailsensecore.infrastructure.sensors.compass.VectorCompass
 import com.kylecorry.trailsensecore.infrastructure.sensors.declination.DeclinationProvider
 import com.kylecorry.trailsensecore.infrastructure.sensors.gps.GPS
 import com.kylecorry.trailsensecore.infrastructure.system.GeoUriParser
+import com.kylecorry.trailsensecore.infrastructure.system.IntentUtils
 import com.kylecorry.trailsensecore.infrastructure.system.UiUtils
 import com.kylecorry.trailsensecore.infrastructure.time.Throttle
+import org.osmdroid.tileprovider.cachemanager.CacheManager
+import org.osmdroid.views.MapView
 
 class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate? = null) :
     Fragment() {
@@ -25,6 +31,7 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
     private lateinit var mapView: CustomMapView
     private lateinit var compassView: ImageView
     private lateinit var locationLockBtn: FloatingActionButton
+    private lateinit var cacheManager: CacheManager
 
     private var destination: Coordinate? = initialDestination?.coordinate
 
@@ -44,16 +51,20 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        CustomMapView.configure(context)
         val view = inflater.inflate(R.layout.fragment_maps, container, false)
+        CustomMapView.configure(context)
 
         if (!sensorChecker.hasGPS()) {
             // TODO: Can't do anything
         }
 
+        val map = view.findViewById<MapView>(R.id.map)
+
         compassView = view.findViewById(R.id.map_compass)
-        mapView = CustomMapView(view.findViewById(R.id.map), compassView, gps.location)
+        mapView = CustomMapView(map, compassView, gps.location)
         locationLockBtn = view.findViewById(R.id.location_lock_btn)
+
+        cacheManager = CacheManager(map)
 
         UiUtils.setButtonState(locationLockBtn, keepCentered, UiUtils.color(requireContext(), R.color.colorPrimary), UiUtils.color(requireContext(), R.color.colorSecondary))
 
@@ -71,6 +82,11 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
 
         mapView.showLocation(gps.location)
         mapView.setMyLocation(gps.location)
+        mapView.onLocationSelected = { location ->
+            // TODO: Prompt user to either navigate there or share location
+            destination = location
+            ShareService.shareLocation(requireContext(), location)
+        }
 
         return view
     }
@@ -120,6 +136,8 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
             destination = null
             mapView.hideBeacon()
             UiUtils.longToast(requireContext(), getString(R.string.arrived))
+        } else if (d != null){
+            mapView.showBeacon(d)
         }
 
         if (keepCentered){
