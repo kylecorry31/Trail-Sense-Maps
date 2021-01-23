@@ -12,7 +12,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" >
+
+    </org.osmdroid.views.MapView>
 
     <ImageView
         android:id="@+id/map_compass"
@@ -26,6 +28,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textColor="@color/colorSecondary"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/map"
+        tools:text="1.2 mi" />
+
+    <TextView
+        android:id="@+id/to_destination_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@+id/distance"
+        app:layout_constraintStart_toStartOf="@+id/distance"
+        app:layout_constraintTop_toBottomOf="@+id/distance"
+        android:textColor="@color/colorSecondary"
+        android:text="@string/to_destination_label" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/location_lock_btn"

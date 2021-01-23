@@ -6,4 +6,5 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="arrived">You have arrived</string>
     <string name="share_location">Share Location</string>
+    <string name="to_destination_label">to destination</string>
 </resources>
