@@ -13,6 +13,7 @@ import com.kylecorry.trail_sense_maps.databinding.FragmentMapsBinding
 import com.kylecorry.trail_sense_maps.maps.infrastructure.ShareService
 import com.kylecorry.trail_sense_maps.maps.infrastructure.TrailSense
 import com.kylecorry.trailsensecore.domain.geo.Coordinate
+import com.kylecorry.trailsensecore.domain.geo.GeoService
 import com.kylecorry.trailsensecore.domain.units.Distance
 import com.kylecorry.trailsensecore.domain.units.DistanceUnits
 import com.kylecorry.trailsensecore.infrastructure.sensors.SensorChecker
@@ -43,7 +44,7 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
     private val gps by lazy { GPS(requireContext()) }
     private val compass by lazy { VectorCompass(requireContext(), 32, true) }
     private val sensorChecker by lazy { SensorChecker(requireContext()) }
-    private val declinationProvider by lazy { DeclinationProvider(gps, GPS(requireContext())) }
+    private val geoService = GeoService()
 
     private val throttle = Throttle(20)
 
@@ -102,7 +103,6 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         CustomMapView.configure(context)
         mapView.onResume()
         gps.start(this::onLocationUpdate)
-        declinationProvider.start(this::onDeclinationUpdate)
         compass.start(this::onCompassUpdate)
 
         val d = destination
@@ -115,12 +115,10 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
         super.onPause()
         mapView.onPause()
         gps.stop(this::onLocationUpdate)
-        declinationProvider.stop(this::onDeclinationUpdate)
         compass.stop(this::onCompassUpdate)
     }
 
     private fun update() {
-
         if (throttle.isThrottled()){
             return
         }
@@ -159,13 +157,8 @@ class MapsFragment(private val initialDestination: GeoUriParser.NamedCoordinate?
 
     }
 
-    private fun onDeclinationUpdate(): Boolean {
-        compass.declination = declinationProvider.declination
-        update()
-        return false
-    }
-
     private fun onLocationUpdate(): Boolean {
+        compass.declination = geoService.getDeclination(gps.location, gps.altitude)
         if (!wasCentered) {
             mapView.showLocation(gps.location)
             wasCentered = true

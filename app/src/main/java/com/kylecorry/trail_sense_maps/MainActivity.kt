@@ -1,6 +1,7 @@
 package com.kylecorry.trail_sense_maps
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -38,12 +39,26 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        handleGeoIntent(intent)
+    }
+
+    private fun handleGeoIntent(intent: Intent){
         val intentData = intent.data
         if (intent.scheme == "geo" && intentData != null) {
             val namedCoordinate = GeoUriParser().parse(intentData)
             geoIntentLocation = namedCoordinate
             bottomNavigation.selectedItemId = R.id.action_maps
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent == null) {
+            return
+        }
+
+        setIntent(intent)
+        handleGeoIntent(intent)
     }
 
     private fun syncFragmentWithSelection(selection: Int){
