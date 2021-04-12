@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TS Maps</string>
+    <string name="app_name" translatable="false">TS Maps</string>
     <string name="action_maps">Maps</string>
 
     <string name="dialog_ok">OK</string>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_maps">Karten</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Abbrechen</string>
+    <string name="arrived">Sie sind angekommen</string>
+    <string name="share_location">Standort teilen</string>
+    <string name="to_destination_label">bis zum Ziel</string>
+</resources>
